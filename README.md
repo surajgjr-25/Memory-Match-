@@ -6,17 +6,17 @@ This is a React-based memory matching game where players flip cards to find matc
 
 ## Features
 
-* Flip card matching system
-* Timer-based gameplay
-* Score calculation
-* Multiple difficulty levels (Easy, Medium, Hard)
+* Card matching system
+* Timer and score tracking
+* Multiple difficulty levels
+* Smooth UI animations
 
 ## Tech Stack
 
 * React JS
 * JavaScript
 * HTML & CSS
-* Testing Library (Jest/Vitest)
+* Testing Library (Vitest)
 
 ## Project Structure
 
@@ -27,8 +27,9 @@ This is a React-based memory matching game where players flip cards to find matc
 ## How to Run
 
 npm install
-npm start
+npm run start
 
 ## Run Tests
 
 npm test
+
