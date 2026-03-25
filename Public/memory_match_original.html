@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Match — Find the Pairs</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07070f;
+  --bg2: #0f0f1e;
+  --surface: #131326;
+  --surface2: #1a1a33;
+  --gold: #d4a853;
+  --gold2: #f0c96e;
+  --gold-dim: rgba(212,168,83,0.15);
+  --teal: #3ecfb2;
+  --pink: #e058a0;
+  --text: #f0eeea;
+  --text2: #8a8aaa;
+  --border: rgba(212,168,83,0.18);
+  --card-back: #1a1a33;
+  --glow: rgba(212,168,83,0.35);
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', sans-serif;
+  --r: 14px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ── STAR FIELD ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 60%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 40% 30%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 80%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 80% 55%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 10%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 90%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 50%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 65% 70%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 45%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 88% 85%, rgba(255,255,255,0.5) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── AMBIENT GLOW ── */
+body::after {
+  content: '';
+  position: fixed;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(212,168,83,0.06) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── HEADER ── */
+header {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 2.5rem 2rem 1.5rem;
+  width: 100%;
+}
+
+.title-eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+  opacity: 0.8;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  letter-spacing: -1px;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--gold2) 0%, var(--gold) 50%, #b8923a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  color: var(--text2);
+  margin-top: 0.4rem;
+  letter-spacing: 0.02em;
+}
+
+/* ── STATS BAR ── */
+.stats-bar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  padding: 0 1rem;
+}
+
+.stat-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 20px;
+  min-width: 80px;
+}
+
+.stat-val {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--gold2);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-top: 3px;
+}
+
+.timer-chip .stat-val { color: var(--teal); }
+.timer-chip.warn .stat-val { color: #f0a030; }
+.timer-chip.danger .stat-val { color: var(--pink); animation: pulse-text 0.6s ease-in-out infinite; }
+
+@keyframes pulse-text {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ── DIFFICULTY SELECT ── */
+.diff-row {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+  justify-content: center;
+}
+
+.diff-btn {
+  padding: 7px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.04em;
+}
+
+.diff-btn:hover { border-color: var(--gold); color: var(--gold); }
+.diff-btn.active {
+  background: var(--gold-dim);
+  border-color: var(--gold);
+  color: var(--gold2);
+}
+
+/* ── CARD GRID ── */
+.grid-wrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 680px;
+  padding: 0 1rem;
+  margin-bottom: 2rem;
+}
+
+.card-grid {
+  display: grid;
+  gap: 12px;
+  perspective: 1200px;
+}
+
+.grid-4x4 { grid-template-columns: repeat(4, 1fr); }
+.grid-4x5 { grid-template-columns: repeat(5, 1fr); }
+.grid-4x6 { grid-template-columns: repeat(6, 1fr); }
+
+/* ── CARD ── */
+.card {
+  aspect-ratio: 3/4;
+  cursor: pointer;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.23, 1, 0.32, 1);
+  user-select: none;
+}
+
+.card.flipped { transform: rotateY(180deg); }
+.card.matched { transform: rotateY(180deg); cursor: default; }
+.card.matched .card-front { animation: matchPulse 0.5s ease forwards; }
+.card.shake { animation: cardShake 0.4s ease; }
+
+@keyframes matchPulse {
+  0% { box-shadow: 0 0 0 0 rgba(212,168,83,0.8); }
+  50% { box-shadow: 0 0 0 8px rgba(212,168,83,0); transform: scale(1.04); }
+  100% { box-shadow: 0 0 0 0 rgba(212,168,83,0); transform: scale(1); }
+}
+
+@keyframes cardShake {
+  0%, 100% { transform: rotateY(180deg) translateX(0); }
+  25% { transform: rotateY(180deg) translateX(-5px); }
+  75% { transform: rotateY(180deg) translateX(5px); }
+}
+
+.card-back, .card-front {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* BACK FACE */
+.card-back {
+  background: var(--card-back);
+  border: 1px solid var(--border);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.card:hover:not(.flipped):not(.matched) .card-back {
+  border-color: rgba(212,168,83,0.5);
+  box-shadow: 0 4px 20px rgba(212,168,83,0.15), inset 0 1px 0 rgba(212,168,83,0.1);
+}
+
+.card-back::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, transparent 30%, rgba(212,168,83,0.04) 50%, transparent 70%),
+    repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(212,168,83,0.025) 8px, rgba(212,168,83,0.025) 9px);
+  border-radius: inherit;
+}
+
+.card-back-symbol {
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  opacity: 0.25;
+  filter: grayscale(0.5);
+}
+
+/* FRONT FACE */
+.card-front {
+  transform: rotateY(180deg);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card.matched .card-front {
+  background: linear-gradient(135deg, rgba(212,168,83,0.12), rgba(212,168,83,0.06));
+  border-color: rgba(212,168,83,0.6);
+}
+
+.card-emoji {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+  transition: transform 0.3s;
+}
+
+.card.matched .card-emoji { transform: scale(1.1); }
+
+.card-label {
+  font-size: clamp(0.55rem, 1.2vw, 0.72rem);
+  font-weight: 500;
+  color: var(--text2);
+  letter-spacing: 0.05em;
+  text-align: center;
+  padding: 0 4px;
+}
+
+.card.matched .card-label { color: var(--gold); }
+
+/* MATCHED OVERLAY */
+.matched-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.card.matched .matched-overlay {
+  opacity: 1;
+  background: radial-gradient(circle at 50% 50%, rgba(212,168,83,0.15) 0%, transparent 70%);
+}
+
+/* ── PARTICLES ── */
+.particle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 50%;
+  animation: particleFly 0.9s ease-out forwards;
+}
+
+@keyframes particleFly {
+  0% { opacity: 1; transform: scale(1) translate(0, 0); }
+  100% { opacity: 0; transform: scale(0.3) translate(var(--tx), var(--ty)); }
+}
+
+/* ── BOTTOM ACTIONS ── */
+.actions {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-reset {
+  padding: 0.7rem 2rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.04em;
+}
+
+.btn-reset:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+
+/* ── WIN OVERLAY ── */
+.win-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(7,7,15,0.92);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+}
+
+.win-overlay.show { display: flex; }
+
+.win-card {
+  background: var(--surface);
+  border: 1px solid rgba(212,168,83,0.4);
+  border-radius: 20px;
+  padding: 3rem 3.5rem;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 0 80px rgba(212,168,83,0.15);
+  animation: winCardPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes winCardPop {
+  from { transform: scale(0.7) translateY(30px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.win-trophy { font-size: 4rem; margin-bottom: 1rem; display: block; animation: trophySpin 1s ease both 0.4s; }
+@keyframes trophySpin {
+  from { transform: rotate(-20deg) scale(0.5); opacity: 0; }
+  to { transform: rotate(0deg) scale(1); opacity: 1; }
+}
+
+.win-title {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--gold2), var(--gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.4rem;
+}
+
+.win-sub { color: var(--text2); font-size: 0.9rem; margin-bottom: 1.8rem; }
+
+.win-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 2rem;
+}
+
+.win-stat {
+  background: var(--bg2);
+  border-radius: 10px;
+  padding: 12px 8px;
+}
+
+.win-stat-val {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gold2);
+}
+
+.win-stat-label {
+  font-size: 0.65rem;
+  color: var(--text2);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.btn-play-again {
+  width: 100%;
+  padding: 0.9rem;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, var(--gold), #b8923a);
+  color: #07070f;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 20px rgba(212,168,83,0.3);
+}
+
+.btn-play-again:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(212,168,83,0.4); }
+
+/* ── COMBO FLASH ── */
+.combo-flash {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.5);
+  z-index: 900;
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--gold2);
+  pointer-events: none;
+  opacity: 0;
+  text-shadow: 0 0 30px rgba(212,168,83,0.8);
+  white-space: nowrap;
+}
+
+.combo-flash.show {
+  animation: comboAnim 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes comboAnim {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  70% { opacity: 1; transform: translate(-50%, -60%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -80%) scale(0.9); }
+}
+
+/* ── PROGRESS BAR ── */
+.progress-wrap {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 680px;
+  padding: 0 1rem;
+  margin-bottom: 1rem;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text2);
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold2));
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: 0 0 10px rgba(212,168,83,0.4);
+}
+
+/* ── BEST SCORE ── */
+.best-badge {
+  position: relative;
+  z-index: 10;
+  font-size: 0.72rem;
+  color: var(--text2);
+  margin-bottom: 1.2rem;
+  letter-spacing: 0.06em;
+}
+
+.best-badge span { color: var(--gold); font-weight: 600; }
+
+@media (max-width: 500px) {
+  .card-grid { gap: 8px; }
+  .grid-4x4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-4x5 { grid-template-columns: repeat(4, 1fr); }
+  .grid-4x6 { grid-template-columns: repeat(4, 1fr); }
+  .win-card { padding: 2rem 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-eyebrow">✦ Memory Challenge ✦</div>
+  <h1>Memory Match</h1>
+  <div class="subtitle">Flip the cards. Find the pairs. Beat the clock.</div>
+</header>
+
+<div class="stats-bar">
+  <div class="stat-chip timer-chip" id="timer-chip">
+    <div class="stat-val" id="timer-val">—</div>
+    <div class="stat-label">Time</div>
+  </div>
+  <div class="stat-chip">
+    <div class="stat-val" id="moves-val">0</div>
+    <div class="stat-label">Moves</div>
+  </div>
+  <div class="stat-chip">
+    <div class="stat-val" id="pairs-val">0/0</div>
+    <div class="stat-label">Pairs</div>
+  </div>
+  <div class="stat-chip">
+    <div class="stat-val" id="score-val">0</div>
+    <div class="stat-label">Score</div>
+  </div>
+</div>
+
+<div class="diff-row">
+  <button class="diff-btn active" data-diff="easy" onclick="setDiff(this)">Easy · 4×4</button>
+  <button class="diff-btn" data-diff="medium" onclick="setDiff(this)">Medium · 4×5</button>
+  <button class="diff-btn" data-diff="hard" onclick="setDiff(this)">Hard · 4×6</button>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span>Pairs found</span>
+    <span id="progress-text">0 of 0</span>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+</div>
+
+<div class="best-badge" id="best-badge">Best: <span id="best-val">—</span></div>
+
+<div class="grid-wrapper">
+  <div class="card-grid grid-4x4" id="card-grid"></div>
+</div>
+
+<div class="actions">
+  <button class="btn-reset" onclick="initGame()">↺ New Game</button>
+  <button class="btn-reset" onclick="shuffleAndReset()">⟳ Shuffle</button>
+</div>
+
+<!-- COMBO FLASH -->
+<div class="combo-flash" id="combo-flash">🔥 Combo!</div>
+
+<!-- WIN OVERLAY -->
+<div class="win-overlay" id="win-overlay">
+  <div class="win-card">
+    <span class="win-trophy">🏆</span>
+    <div class="win-title">You Won!</div>
+    <div class="win-sub" id="win-sub">All pairs found!</div>
+    <div class="win-stats">
+      <div class="win-stat">
+        <div class="win-stat-val" id="win-time">0s</div>
+        <div class="win-stat-label">Time</div>
+      </div>
+      <div class="win-stat">
+        <div class="win-stat-val" id="win-moves">0</div>
+        <div class="win-stat-label">Moves</div>
+      </div>
+      <div class="win-stat">
+        <div class="win-stat-val" id="win-score">0</div>
+        <div class="win-stat-label">Score</div>
+      </div>
+    </div>
+    <button class="btn-play-again" onclick="closeWinAndReset()">Play Again ✦</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  CARD DATA
+// ═══════════════════════════════════════════
+const ALL_CARDS = [
+  { emoji: '🌙', label: 'Moon' },
+  { emoji: '⭐', label: 'Star' },
+  { emoji: '☀️', label: 'Sun' },
+  { emoji: '🪐', label: 'Saturn' },
+  { emoji: '🌌', label: 'Galaxy' },
+  { emoji: '☄️', label: 'Comet' },
+  { emoji: '🌠', label: 'Shooting Star' },
+  { emoji: '🔭', label: 'Telescope' },
+  { emoji: '🚀', label: 'Rocket' },
+  { emoji: '👾', label: 'Alien' },
+  { emoji: '🌍', label: 'Earth' },
+  { emoji: '💫', label: 'Dizzy' },
+  { emoji: '🛸', label: 'UFO' },
+  { emoji: '🌙', label: 'Crescent' },
+  { emoji: '🔮', label: 'Crystal' },
+  { emoji: '💎', label: 'Diamond' },
+  { emoji: '⚡', label: 'Lightning' },
+  { emoji: '🌊', label: 'Wave' },
+  { emoji: '🦋', label: 'Butterfly' },
+  { emoji: '🌺', label: 'Flower' },
+  { emoji: '🦄', label: 'Unicorn' },
+  { emoji: '🐉', label: 'Dragon' },
+  { emoji: '🍄', label: 'Mushroom' },
+  { emoji: '🦊', label: 'Fox' },
+];
+
+const DIFFICULTY = {
+  easy:   { cols: 4, pairs: 8,  time: 90,  grid: 'grid-4x4' },
+  medium: { cols: 5, pairs: 10, time: 120, grid: 'grid-4x5' },
+  hard:   { cols: 6, pairs: 12, time: 150, grid: 'grid-4x6' },
+};
+
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+let diff = 'easy';
+let cards = [];
+let flipped = [];
+let matched = new Set();
+let moves = 0;
+let score = 0;
+let combo = 0;
+let lockBoard = false;
+let timerInterval = null;
+let timeLeft = 90;
+let gameStarted = false;
+let bestScores = { easy: null, medium: null, hard: null };
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+function setDiff(btn) {
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  diff = btn.dataset.diff;
+  initGame();
+}
+
+function initGame() {
+  clearInterval(timerInterval);
+  const cfg = DIFFICULTY[diff];
+  timeLeft = cfg.time;
+  moves = 0;
+  score = 0;
+  combo = 0;
+  matched = new Set();
+  flipped = [];
+  lockBoard = false;
+  gameStarted = false;
+
+  // Pick cards
+  const pool = shuffle([...ALL_CARDS]).slice(0, cfg.pairs);
+  cards = shuffle([...pool, ...pool].map((c, i) => ({ ...c, id: i })));
+
+  renderGrid();
+  updateStats();
+  updateProgress();
+  updateBestBadge();
+
+  document.getElementById('win-overlay').classList.remove('show');
+  document.getElementById('timer-chip').className = 'stat-chip timer-chip';
+  document.getElementById('timer-val').textContent = formatTime(timeLeft);
+}
+
+function shuffleAndReset() {
+  initGame();
+}
+
+// ═══════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════
+function renderGrid() {
+  const cfg = DIFFICULTY[diff];
+  const grid = document.getElementById('card-grid');
+  grid.className = `card-grid ${cfg.grid}`;
+  grid.innerHTML = '';
+
+  cards.forEach((card, idx) => {
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.dataset.idx = idx;
+    el.innerHTML = `
+      <div class="card-back">
+        <span class="card-back-symbol">✦</span>
+      </div>
+      <div class="card-front">
+        <div class="card-emoji">${card.emoji}</div>
+        <div class="card-label">${card.label}</div>
+        <div class="matched-overlay"></div>
+      </div>
+    `;
+    el.addEventListener('click', () => onCardClick(idx, el));
+    grid.appendChild(el);
+
+    // staggered reveal animation
+    el.style.opacity = '0';
+    el.style.transform = 'scale(0.8)';
+    setTimeout(() => {
+      el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      el.style.opacity = '1';
+      el.style.transform = 'scale(1)';
+    }, idx * 35 + 50);
+  });
+}
+
+// ═══════════════════════════════════════════
+//  CARD CLICK
+// ═══════════════════════════════════════════
+function onCardClick(idx, el) {
+  if (lockBoard) return;
+  if (matched.has(idx)) return;
+  if (flipped.includes(idx)) return;
+  if (flipped.length >= 2) return;
+
+  // Start timer on first click
+  if (!gameStarted) {
+    gameStarted = true;
+    startTimer();
+  }
+
+  el.classList.add('flipped');
+  flipped.push(idx);
+
+  if (flipped.length === 2) {
+    moves++;
+    updateStats();
+    checkMatch();
+  }
+}
+
+function checkMatch() {
+  lockBoard = true;
+  const [a, b] = flipped;
+  const cardA = cards[a];
+  const cardB = cards[b];
+  const isMatch = cardA.emoji === cardB.emoji;
+
+  if (isMatch) {
+    combo++;
+    const basePoints = 100;
+    const comboBonus = combo > 1 ? (combo - 1) * 50 : 0;
+    const timeBonus = Math.floor(timeLeft * 0.5);
+    score += basePoints + comboBonus + timeBonus;
+
+    matched.add(a);
+    matched.add(b);
+
+    // Animate matched cards
+    setTimeout(() => {
+      getCardEl(a).classList.add('matched');
+      getCardEl(b).classList.add('matched');
+      spawnParticles(getCardEl(a));
+      spawnParticles(getCardEl(b));
+    }, 100);
+
+    if (combo >= 2) showCombo(combo);
+
+    setTimeout(() => {
+      flipped = [];
+      lockBoard = false;
+      updateStats();
+      updateProgress();
+      if (matched.size === cards.length) setTimeout(winGame, 400);
+    }, 500);
+
+  } else {
+    combo = 0;
+    // Shake and flip back
+    setTimeout(() => {
+      getCardEl(a).classList.add('shake');
+      getCardEl(b).classList.add('shake');
+    }, 200);
+
+    setTimeout(() => {
+      getCardEl(a).classList.remove('flipped', 'shake');
+      getCardEl(b).classList.remove('flipped', 'shake');
+      flipped = [];
+      lockBoard = false;
+    }, 900);
+  }
+}
+
+// ═══════════════════════════════════════════
+//  TIMER
+// ═══════════════════════════════════════════
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    const chip = document.getElementById('timer-chip');
+    document.getElementById('timer-val').textContent = formatTime(timeLeft);
+
+    const pct = timeLeft / DIFFICULTY[diff].time;
+    if (pct < 0.15) chip.className = 'stat-chip timer-chip danger';
+    else if (pct < 0.33) chip.className = 'stat-chip timer-chip warn';
+    else chip.className = 'stat-chip timer-chip';
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      handleTimeout();
+    }
+  }, 1000);
+}
+
+function handleTimeout() {
+  lockBoard = true;
+  // Reveal all unmatched
+  cards.forEach((_, idx) => {
+    if (!matched.has(idx)) getCardEl(idx).classList.add('flipped');
+  });
+  setTimeout(() => {
+    document.getElementById('win-sub').textContent = `⏰ Time's up! Found ${matched.size / 2} of ${cards.length / 2} pairs.`;
+    const win = document.getElementById('win-overlay');
+    document.querySelector('.win-trophy').textContent = '💀';
+    document.querySelector('.win-title').textContent = "Time's Up!";
+    document.getElementById('win-time').textContent = '0s';
+    document.getElementById('win-moves').textContent = moves;
+    document.getElementById('win-score').textContent = score;
+    win.classList.add('show');
+  }, 1200);
+}
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return m > 0 ? `${m}:${String(sec).padStart(2, '0')}` : `${sec}s`;
+}
+
+// ═══════════════════════════════════════════
+//  WIN
+// ═══════════════════════════════════════════
+function winGame() {
+  clearInterval(timerInterval);
+  const timeTaken = DIFFICULTY[diff].time - timeLeft;
+  const timeBonus = timeLeft * 2;
+  const movePenalty = Math.max(0, (moves - cards.length / 2) * 10);
+  const finalScore = score + timeBonus - movePenalty;
+
+  // Save best
+  if (!bestScores[diff] || finalScore > bestScores[diff]) {
+    bestScores[diff] = finalScore;
+  }
+
+  document.querySelector('.win-trophy').textContent = '🏆';
+  document.querySelector('.win-title').textContent = 'You Won!';
+  document.getElementById('win-sub').textContent = getRank(finalScore, diff);
+  document.getElementById('win-time').textContent = formatTime(timeTaken);
+  document.getElementById('win-moves').textContent = moves;
+  document.getElementById('win-score').textContent = finalScore;
+  document.getElementById('win-overlay').classList.add('show');
+
+  // Big win particles
+  for (let i = 0; i < 30; i++) {
+    setTimeout(() => spawnRandomParticle(), i * 60);
+  }
+}
+
+function getRank(score, diff) {
+  const thresholds = {
+    easy:   [2000, 1500, 1000],
+    medium: [2500, 1800, 1200],
+    hard:   [3000, 2200, 1500],
+  };
+  const t = thresholds[diff];
+  if (score >= t[0]) return '✦ Legendary Memory! Flawless execution.';
+  if (score >= t[1]) return '★ Master. Incredibly sharp.';
+  if (score >= t[2]) return '◈ Well played! Keep practicing.';
+  return '◇ Good effort! Try for a higher score.';
+}
+
+function closeWinAndReset() {
+  document.getElementById('win-overlay').classList.remove('show');
+  initGame();
+}
+
+// ═══════════════════════════════════════════
+//  UPDATE UI
+// ═══════════════════════════════════════════
+function updateStats() {
+  document.getElementById('moves-val').textContent = moves;
+  document.getElementById('pairs-val').textContent = `${matched.size / 2}/${cards.length / 2}`;
+  document.getElementById('score-val').textContent = score;
+}
+
+function updateProgress() {
+  const pct = cards.length > 0 ? (matched.size / cards.length) * 100 : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = `${matched.size / 2} of ${cards.length / 2}`;
+}
+
+function updateBestBadge() {
+  const b = bestScores[diff];
+  document.getElementById('best-val').textContent = b !== null ? b : '—';
+}
+
+// ═══════════════════════════════════════════
+//  EFFECTS
+// ═══════════════════════════════════════════
+function spawnParticles(el) {
+  const rect = el.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const colors = ['#d4a853', '#f0c96e', '#fff9e6', '#3ecfb2', '#e058a0'];
+
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 7 + 3;
+    const angle = (Math.PI * 2 * i) / 12 + Math.random() * 0.5;
+    const dist = 40 + Math.random() * 60;
+    const tx = Math.cos(angle) * dist;
+    const ty = Math.sin(angle) * dist;
+    p.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${cx}px; top:${cy}px;
+      background:${colors[Math.floor(Math.random() * colors.length)]};
+      --tx:${tx}px; --ty:${ty}px;
+    `;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 950);
+  }
+}
+
+function spawnRandomParticle() {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const size = Math.random() * 10 + 4;
+  const x = Math.random() * window.innerWidth;
+  const y = Math.random() * window.innerHeight;
+  const colors = ['#d4a853', '#f0c96e', '#3ecfb2', '#e058a0', '#fff'];
+  const tx = (Math.random() - 0.5) * 200;
+  const ty = (Math.random() - 0.5) * 200;
+  p.style.cssText = `
+    width:${size}px; height:${size}px;
+    left:${x}px; top:${y}px;
+    background:${colors[Math.floor(Math.random() * colors.length)]};
+    --tx:${tx}px; --ty:${ty}px;
+  `;
+  document.body.appendChild(p);
+  setTimeout(() => p.remove(), 1000);
+}
+
+function showCombo(n) {
+  const el = document.getElementById('combo-flash');
+  const msgs = ['', '', '🔥 Combo!', '⚡ Hot Streak!', '💫 On Fire!', '🌟 Unstoppable!', '✨ Legendary!'];
+  el.textContent = msgs[Math.min(n, msgs.length - 1)] || `✦ ${n}x Combo!`;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1050);
+}
+
+// ═══════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════
+function getCardEl(idx) {
+  return document.querySelector(`[data-idx="${idx}"]`);
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ═══════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════
+initGame();
+</script>
+</body>
+</html>
